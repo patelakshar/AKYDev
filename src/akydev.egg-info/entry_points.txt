@@ -1,0 +1,2 @@
+[console_scripts]
+akydev = akydev.main:app
