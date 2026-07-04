@@ -61,8 +61,19 @@ def attach(
 def task(
     description: str = typer.Argument(...),
 ):
-    console.rule("[cyan]Task")
-    console.print(description)
+    """
+    Create a new task.
+    """
+
+    workspace = Path.cwd()
+
+    from akydev.workspace.task_manager import create_task
+
+    task_file = create_task(workspace, description)
+
+    console.rule("[cyan]Task Created")
+    console.print(f"[green]Title[/green] : {description}")
+    console.print(f"[green]Saved[/green] : {task_file}")
 
 
 @app.command()
