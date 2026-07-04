@@ -8,6 +8,9 @@ from akydev.workspace.project_model import save_project_model
 from akydev.workspace.task_manager import create_task
 from akydev.planner.planner import generate_plan
 from akydev.prompts.generator import generate_prompt
+from akydev.providers.service import generate_response
+from akydev.editor.validator import PatchValidator
+from akydev.editor.apply import PatchApplier
 
 console = Console()
 
@@ -53,9 +56,7 @@ def attach(
 
 
 @app.command()
-def task(
-    description: str = typer.Argument(...),
-):
+def task(description: str = typer.Argument(...)):
     workspace = Path.cwd()
 
     task_file = create_task(workspace, description)
@@ -81,11 +82,8 @@ def plan():
 
     if plan["tasks"]:
         console.print("\n[bold cyan]Tasks[/bold cyan]")
-
         for task in plan["tasks"]:
-            console.print(
-                f" • #{task['id']}  {task['title']}  [{task['status']}]"
-            )
+            console.print(f" • #{task['id']}  {task['title']}  [{task['status']}]")
 
     console.rule("[bold green]Planner Ready")
 
@@ -102,13 +100,58 @@ def prompt():
 
 
 @app.command()
-def review():
-    console.print("[yellow]Review engine coming soon...[/yellow]")
+def implement():
+    workspace = Path.cwd()
+
+    response = generate_response(workspace)
+
+    console.rule("[bold cyan]AI Response")
+    console.print(response)
+    console.rule("[bold green]Complete")
 
 
 @app.command()
+def review():
+    workspace = Path.cwd()
+
+    result = PatchValidator(workspace).validate()
+
+    console.rule("[bold cyan]Patch Review")
+
+    if result["valid"]:
+        console.print("[bold green]✓ VALID[/bold green]")
+    else:
+        console.print("[bold red]✗ INVALID[/bold red]")
+
+    console.print(result["reason"])
+
+    console.rule("[bold green]Complete")
+
+@app.command()
 def apply():
-    console.print("[yellow]Patch engine coming soon...[/yellow]")
+    workspace = Path.cwd()
+
+    validator = PatchValidator(workspace)
+
+    result = validator.validate()
+
+    if not result["valid"]:
+        console.rule("[bold red]Patch Validation Failed")
+        console.print(result["reason"])
+        raise typer.Exit(1)
+
+    result = PatchApplier(workspace).apply()
+
+    console.rule("[bold cyan]Patch Apply")
+
+    if result["success"]:
+        console.print("[bold green]✓ SUCCESS[/bold green]")
+    else:
+        console.print("[bold red]✗ FAILED[/bold red]")
+
+    console.print(result["reason"])
+
+    console.rule("[bold green]Complete")
 
 
 @app.command()

@@ -5,6 +5,7 @@ from akydev.cli.commands import (
     attach,
     apply,
     commit,
+    implement,
     plan,
     prompt,
     review,
@@ -22,6 +23,7 @@ app.command()(attach)
 app.command()(task)
 app.command()(plan)
 app.command()(prompt)
+app.command()(implement)
 app.command()(review)
 app.command()(apply)
 app.command()(commit)

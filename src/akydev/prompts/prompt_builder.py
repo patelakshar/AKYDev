@@ -1,49 +1,77 @@
 import json
 from pathlib import Path
 
+from akydev.prompts.context_builder import collect_source_code
+
 
 def build_prompt(workspace: Path) -> Path:
-    project_file = workspace / ".akydev" / "project.json"
-    tasks_dir = workspace / ".akydev" / "tasks"
-
-    if not project_file.exists():
-        raise FileNotFoundError("project.json not found")
-
-    with project_file.open("r", encoding="utf-8") as f:
-        project = json.load(f)
+    project = json.loads(
+        (workspace / ".akydev" / "project.json").read_text()
+    )
 
     tasks = []
 
+    tasks_dir = workspace / ".akydev" / "tasks"
+
     if tasks_dir.exists():
-        for task_file in sorted(tasks_dir.glob("task-*.json")):
-            with task_file.open("r", encoding="utf-8") as f:
-                tasks.append(json.load(f))
+        for task in sorted(tasks_dir.glob("task-*.json")):
+            tasks.append(json.loads(task.read_text()))
 
-    lines = []
+    context = collect_source_code(workspace, tasks[0]["title"] if tasks else "")
 
-    lines.append("# AKYDev Prompt")
-    lines.append("")
-    lines.append("## Project")
-    lines.append(f"Name: {project['Project']}")
-    lines.append(f"Entry Point: {project['Entry Point']}")
-    lines.append(f"Python Files: {project['Python Files']}")
-    lines.append(f"Packages: {project['Packages']}")
-    lines.append("")
+    prompt = f"""
+You are a Senior Python Software Engineer.
 
-    lines.append("## Tasks")
+========================
+PROJECT
+========================
+
+Name: {project["Project"]}
+
+Entry Point: {project["Entry Point"]}
+
+Python Files: {project["Python Files"]}
+
+Packages: {project["Packages"]}
+
+========================
+TASKS
+========================
+
+"""
 
     for task in tasks:
-        lines.append(f"- [{task['status']}] {task['title']}")
+        prompt += f"""
+Task #{task["id"]}
 
-    lines.append("")
-    lines.append("## Instructions")
-    lines.append("Implement ONLY the pending tasks.")
-    lines.append("Maintain existing architecture.")
-    lines.append("Do not rename files.")
-    lines.append("Generate production-ready Python code.")
-    lines.append("Return unified diff patches only.")
+Title: {task["title"]}
 
-    prompt = "\n".join(lines)
+Status: {task["status"]}
+
+"""
+
+    prompt += """
+
+========================
+SOURCE CODE
+========================
+
+"""
+
+    prompt += context
+
+    prompt += """
+
+========================
+RULES
+========================
+
+- Keep existing architecture.
+- Modify only required files.
+- Produce production-quality code.
+- Return ONLY a unified diff patch.
+- Do not explain your answer.
+"""
 
     output = workspace / ".akydev" / "prompt.txt"
 
