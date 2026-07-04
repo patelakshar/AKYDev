@@ -5,6 +5,7 @@ from akydev.cli.commands import (
     attach,
     apply,
     commit,
+    plan,
     review,
     task,
 )
@@ -18,6 +19,7 @@ app = typer.Typer(
 app.command()(analyze)
 app.command()(attach)
 app.command()(task)
+app.command()(plan)
 app.command()(review)
 app.command()(apply)
 app.command()(commit)

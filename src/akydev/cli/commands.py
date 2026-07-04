@@ -5,6 +5,8 @@ from rich.console import Console
 
 from akydev.workspace.scanner import scan_workspace
 from akydev.workspace.project_model import save_project_model
+from akydev.workspace.task_manager import create_task
+from akydev.planner.planner import generate_plan
 
 console = Console()
 
@@ -19,15 +21,9 @@ def analyze(
         file_okay=False,
         dir_okay=True,
         resolve_path=True,
-        help="Project directory to analyze.",
     ),
 ):
-    """
-    Analyze a software project.
-    """
-
     result = scan_workspace(path)
-
     save_path = save_project_model(result, path)
 
     console.rule("[bold cyan]AKYDev Project Analyzer")
@@ -36,9 +32,7 @@ def analyze(
         console.print(f"[green]{key:<18}[/green] : {value}")
 
     console.print()
-
     console.print(f"[bold blue]Project Model[/bold blue] : {save_path}")
-
     console.rule("[bold green]Analysis Complete")
 
 
@@ -50,7 +44,6 @@ def attach(
         file_okay=False,
         dir_okay=True,
         resolve_path=True,
-        help="Project directory to attach.",
     ),
 ):
     console.print(f"[bold green]✓ Attached project[/bold green]")
@@ -61,13 +54,7 @@ def attach(
 def task(
     description: str = typer.Argument(...),
 ):
-    """
-    Create a new task.
-    """
-
     workspace = Path.cwd()
-
-    from akydev.workspace.task_manager import create_task
 
     task_file = create_task(workspace, description)
 
@@ -77,15 +64,40 @@ def task(
 
 
 @app.command()
+def plan():
+    workspace = Path.cwd()
+
+    plan = generate_plan(workspace)
+
+    console.rule("[bold magenta]Execution Plan")
+
+    console.print(f"[green]Project[/green]        : {plan['project']}")
+    console.print(f"[green]Entry Point[/green]    : {plan['entry_point']}")
+    console.print(f"[green]Python Files[/green]   : {plan['python_files']}")
+    console.print(f"[green]Packages[/green]       : {plan['packages']}")
+    console.print(f"[green]Pending Tasks[/green]  : {plan['pending_tasks']}")
+
+    if plan["tasks"]:
+        console.print("\n[bold cyan]Tasks[/bold cyan]")
+
+        for task in plan["tasks"]:
+            console.print(
+                f" • #{task['id']}  {task['title']}  [{task['status']}]"
+            )
+
+    console.rule("[bold green]Planner Ready")
+
+
+@app.command()
 def review():
-    console.print("[yellow]Review engine coming in Sprint 4...[/yellow]")
+    console.print("[yellow]Review engine coming soon...[/yellow]")
 
 
 @app.command()
 def apply():
-    console.print("[yellow]Patch engine coming in Sprint 5...[/yellow]")
+    console.print("[yellow]Patch engine coming soon...[/yellow]")
 
 
 @app.command()
 def commit():
-    console.print("[yellow]Git automation coming in Sprint 6...[/yellow]")
+    console.print("[yellow]Git automation coming soon...[/yellow]")
