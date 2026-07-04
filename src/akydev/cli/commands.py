@@ -7,6 +7,7 @@ from akydev.workspace.scanner import scan_workspace
 from akydev.workspace.project_model import save_project_model
 from akydev.workspace.task_manager import create_task
 from akydev.planner.planner import generate_plan
+from akydev.prompts.generator import generate_prompt
 
 console = Console()
 
@@ -33,6 +34,7 @@ def analyze(
 
     console.print()
     console.print(f"[bold blue]Project Model[/bold blue] : {save_path}")
+
     console.rule("[bold green]Analysis Complete")
 
 
@@ -86,6 +88,17 @@ def plan():
             )
 
     console.rule("[bold green]Planner Ready")
+
+
+@app.command()
+def prompt():
+    workspace = Path.cwd()
+
+    prompt_file = generate_prompt(workspace)
+
+    console.rule("[bold blue]Prompt Generated")
+    console.print(prompt_file)
+    console.rule("[bold green]Ready")
 
 
 @app.command()
